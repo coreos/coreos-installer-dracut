@@ -1,0 +1,18 @@
+[Unit]
+Description=CoreOS Installer
+
+After=basic.target
+# Network is enabled here
+After=nm-run.service
+# compat: remove when everyone is on dracut 053+
+After=dracut-initqueue.service
+
+ConditionKernelCommandLine=coreos.inst.install_dev
+OnFailure=emergency.target
+OnFailureJobMode=replace-irreversibly
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/coreos-installer-service
+StandardOutput=kmsg+console
+StandardError=kmsg+console
