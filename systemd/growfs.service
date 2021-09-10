@@ -2,7 +2,7 @@
 Description=Grow root filesystem
 DefaultDependencies=false
 
-After=coreos-installer.service
+After=coreos-installer.target
 Before=coreos-installer-reboot.service
 Requires=dev-disk-by\x2dlabel-root.device
 
