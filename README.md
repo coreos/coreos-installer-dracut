@@ -1,1 +1,1 @@
-# dracut-coi
+# edge-installer
