@@ -13,6 +13,7 @@ install() {
     inst_multiple gpg
     inst_multiple gpg-agent
     inst_multiple gpg-connect-agent
+    inst_multiple coreos-installer
 
     inst_multiple \
     realpath \
@@ -55,8 +56,6 @@ install() {
         clevis-luks-unlock \
         pwmake \
         tpm2_create
-
-    inst_simple "$moddir/coreos-installer" "/usr/bin/coreos-installer"
 
     inst_simple "$moddir/coreos-installer.target" \
         "${systemdsystemunitdir}/coreos-installer.target"
