@@ -57,9 +57,6 @@ install() {
         pwmake \
         tpm2_create
 
-    inst_simple "$moddir/coreos-installer.target" \
-        "${systemdsystemunitdir}/coreos-installer.target"
-
     inst_simple "$moddir/coreos-installer-generator" \
         "$systemdutildir/system-generators/coreos-installer-generator"
 
