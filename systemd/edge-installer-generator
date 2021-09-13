@@ -39,21 +39,21 @@ karg_bool() {
     esac
 }
 
-if [ -n "$(karg coreos.inst.install_dev)" ]; then
+if [ -n "$(karg edge.inst.install_dev)" ]; then
     # Create precondition for coreos-installer-reboot.service if requested
-    if ! karg_bool coreos.inst.skip_reboot; then
-        > /run/coreos-installer-reboot
+    if ! karg_bool edge.inst.skip_reboot; then
+        > /run/edge-installer-reboot
     fi
 fi
 
 # if we're not running in dracut, skip
-if [ -z "$(karg liveiso.root)" ]; then
+if [ -z "$(karg edge.liveiso.root)" ]; then
     exit 0
 fi
 
 add_requires run-media-iso.mount default.target
 
-isoroot=$(getarg liveiso.root= ||:)
+isoroot=$(getarg edge.liveiso.root= ||:)
 
 mkdir -p /run/media/iso
 isosrc=dev/disk/by-label/${isoroot}
@@ -74,10 +74,10 @@ After=nm-run.service
 # compat: remove when everyone is on dracut 053+
 After=dracut-initqueue.service
 
-Before=coreos-installer.service
+Before=edge-installer.service
 After=${isosrc_escaped}
 Requires=${isosrc_escaped}
-ConditionKernelCommandLine=coreos.inst.image_file
+ConditionKernelCommandLine=edge.inst.image_file
 [Mount]
 What=/${isosrc}
 Where=/run/media/iso
