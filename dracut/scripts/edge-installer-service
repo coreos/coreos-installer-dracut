@@ -10,9 +10,6 @@ PERSIST_KERNEL_NET_PARAMS=("ipv6.disable" "net.ifnames" "net.naming-scheme")
 # List from https://www.mankier.com/7/dracut.cmdline#Description-Network
 PERSIST_DRACUT_NET_PARAMS=("ip" "ifname" "rd.route" "bootdev" "BOOTIF" "rd.bootif" "nameserver" "rd.peerdns" "biosdevname" "vlan" "bond" "team" "bridge" "rd.net.timeout.carrier")
 
-# IBM S390X params to persist
-PERSIST_S390X_PARAMS=("rd.dasd" "rd.zfcp" "rd.znet" "zfcp.allow_lun_scan" "cio_ignore")
-
 args=("install")
 
 cmdline=( $(</proc/cmdline) )
@@ -56,14 +53,6 @@ if [ "${device##*/}" = "${device}" ]; then
 fi
 args+=("${device}")
 
-# Ignition URL
-ignition_url="$(karg edge.inst.ignition_url)"
-# Ignore "skip" for compatibility
-if [ -n "${ignition_url}" -a "${ignition_url}" != "skip" ]; then
-    # Allow HTTP URLs for compatibility
-    args+=("--ignition-url" "${ignition_url}" "--insecure-ignition")
-fi
-
 # Forward whitelisted kernel arguments to the installed system. We have
 # separate sets of whitelists for first-boot kargs and persistent kargs.
 # If additional networking options have been specified, add `rd.neednet=1`
@@ -75,14 +64,9 @@ for item in "${cmdline[@]}"; do
             firstboot_args+="${item} "
         fi
     done
-    for param in "${PERSIST_S390X_PARAMS[@]}"; do
-        if [[ $item =~ ^$param(=.*)?$ ]]; then
-            args+=("--append-karg" "${item}")
-        fi
-    done
 done
 if [ -n "${firstboot_args}" ]; then
-    args+=("--firstboot-args" "rd.neednet=1 ${firstboot_args}")
+    args+=("--append-karg" "rd.neednet=1 ${firstboot_args}")
 fi
 
 imgurl="$(karg edge.inst.image_url)"
@@ -95,8 +79,6 @@ fi
 # Other args that should just be copied over
 copy_arg edge.inst.image_url       --image-url
 copy_arg edge.inst.image_file      --image-file
-copy_arg edge.inst.platform_id     --platform
-copy_arg edge.inst.stream          --stream
 copy_arg edge.inst.save_partlabel  --save-partlabel
 copy_arg edge.inst.save_partindex  --save-partindex
 
