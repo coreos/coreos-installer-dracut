@@ -57,16 +57,16 @@ install() {
         pwmake \
         tpm2_create
 
-    inst_simple "$moddir/edge-installer-generator" \
-        "$systemdutildir/system-generators/edge-installer-generator"
+    inst_simple "$moddir/coreos-installer-generator" \
+        "$systemdutildir/system-generators/coreos-installer-generator"
 
-    inst_script "$moddir/edge-installer-service" \
-        "/usr/libexec/edge-installer-service"
+    inst_script "$moddir/coreos-installer-service" \
+        "/usr/libexec/coreos-installer-service"
 
-    install_and_enable_unit "edge-installer.service" \
+    install_and_enable_unit "coreos-installer.service" \
         "default.target" 
 
-    install_and_enable_unit "edge-installer-reboot.service" \
+    install_and_enable_unit "coreos-installer-reboot.service" \
         "default.target" 
 
     install_and_enable_unit "growfs.service" \

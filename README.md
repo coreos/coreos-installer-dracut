@@ -1,3 +1,3 @@
-# edge-installer
+# coreos-installer-dracut
 
 Depends on `coreos-installer`.

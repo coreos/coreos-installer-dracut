@@ -23,6 +23,17 @@ karg() {
     echo "${value}"
 }
 
+kargs() {
+    local -n kargs=$1
+    local name="$2" value="$3"
+    for arg in "${cmdline[@]}"; do
+        if [[ "${arg%%=*}" == "${name}" ]]; then
+            value="${arg#*=}"
+	    kargs+=($value)
+        fi
+    done
+}
+
 karg_bool() {
     local value=$(karg "$@")
     case "$value" in
@@ -42,7 +53,7 @@ copy_arg() {
 }
 
 # Get install device
-device="$(karg edge.inst.install_dev)"
+device="$(karg coreos.inst.install_dev)"
 if [ -z "${device}" ]; then
     echo "No install device specified."
     exit 1
@@ -69,21 +80,30 @@ if [ -n "${firstboot_args}" ]; then
     args+=("--append-karg" "rd.neednet=1 ${firstboot_args}")
 fi
 
-imgurl="$(karg edge.inst.image_url)"
-imgfile="$(karg edge.inst.image_file)"
+append_kargs=( )
+kargs append_kargs coreos.inst.append
+for k in "${append_kargs[@]}"; do
+    # can also implode the array and use the flag just once but meh
+    # can also have the kargs function just return a string w/o the
+    # additional array defined here
+	args+=("--append-karg" $k)
+done
+
+imgurl="$(karg coreos.inst.image_url)"
+imgfile="$(karg coreos.inst.image_file)"
 if [ -z "${imgurl}" -a -z "${imgfile}" ]; then
     echo "No image location provided."
     exit 1
 fi
 
 # Other args that should just be copied over
-copy_arg edge.inst.image_url       --image-url
-copy_arg edge.inst.image_file      --image-file
-copy_arg edge.inst.save_partlabel  --save-partlabel
-copy_arg edge.inst.save_partindex  --save-partindex
+copy_arg coreos.inst.image_url       --image-url
+copy_arg coreos.inst.image_file      --image-file
+copy_arg coreos.inst.save_partlabel  --save-partlabel
+copy_arg coreos.inst.save_partindex  --save-partindex
 
 # Insecure boolean
-if karg_bool edge.inst.insecure; then
+if karg_bool coreos.inst.insecure; then
     args+=("--insecure")
 fi
 

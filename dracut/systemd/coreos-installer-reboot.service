@@ -1,9 +1,9 @@
 [Unit]
-Description=Reboot after Edge Installer
-After=edge-installer.service
+Description=Reboot after CoreOS Installer
+After=coreos-installer.service
 OnFailure=emergency.target
 OnFailureJobMode=replace-irreversibly
-ConditionPathExists=/run/edge-installer-reboot
+ConditionPathExists=/run/coreos-installer-reboot
 
 [Service]
 Type=simple
