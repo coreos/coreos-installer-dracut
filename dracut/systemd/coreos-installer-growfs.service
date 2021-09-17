@@ -8,5 +8,5 @@ Requires=dev-disk-by\x2dlabel-root.device
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/growfs
+ExecStart=/usr/sbin/coreos-installer-growfs
 RemainAfterExit=yes
