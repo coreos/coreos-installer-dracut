@@ -9,10 +9,12 @@ TYPE=$(lsblk --output FSTYPE /dev/disk/by-label/root | tail -n1)
 echo ${TYPE}
 dev=$(realpath /dev/disk/by-label/root)
 
-mount -t ${TYPE} /dev/disk/by-label/root /sysroot
+mkdir -p /growroot
 
-# We run after the rootfs is mounted at /sysroot
-path=/sysroot
+mount -t ${TYPE} /dev/disk/by-label/root /growroot
+
+# We run after the rootfs is mounted at /growroot
+path=/growroot
 
 # The use of tail is to avoid errors from duplicate mounts;
 # this shouldn't happen for us but we're being conservative.

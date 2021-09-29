@@ -43,6 +43,10 @@ if [ -n "$(karg coreos.inst.install_dev)" ]; then
     ln -sf "/usr/lib/systemd/system/coreos-installer.target" \
         "${UNIT_DIR}/default.target"
 
+    rm -rf /etc/initrd-release
+
+    dmesg -n 1
+
     # Create precondition for coreos-installer-reboot.service if requested
     if ! karg_bool coreos.inst.skip_reboot; then
         > /run/coreos-installer-reboot
