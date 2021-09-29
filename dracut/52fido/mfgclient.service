@@ -1,0 +1,16 @@
+[Unit]
+Description=Grow root filesystem
+DefaultDependencies=false
+
+After=coreos-installer.service
+Before=coreos-installer-reboot.service
+
+Requires=dev-disk-by\x2dlabel-boot.device
+
+OnFailure=emergency.target
+OnFailureJobMode=replace-irreversibly
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/mfgclient-service
+RemainAfterExit=yes
