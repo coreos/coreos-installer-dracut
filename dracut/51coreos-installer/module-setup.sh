@@ -67,6 +67,9 @@ install() {
         "default.target" 
 
     install_and_enable_unit "coreos-installer-reboot.service" \
+        "default.target"
+
+    install_and_enable_unit "coreos-installer-noreboot.service" \
         "default.target" 
 
     install_and_enable_unit "coreos-installer-growfs.service" \
@@ -74,4 +77,7 @@ install() {
 
     inst_script "$moddir/coreos-installer-growfs" \
         /usr/sbin/coreos-installer-growfs
+
+    inst_simple "$moddir/coreos-installer.target" \
+        "${systemdsystemunitdir}/coreos-installer.target"
 }
