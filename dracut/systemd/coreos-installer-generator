@@ -58,6 +58,14 @@ if [ -z "$(karg coreos.inst.isoroot)" ]; then
     exit 0
 fi
 
+# isoroot is there but let's see if the raw image is online, skip iso mount otherwise
+imgurl="$(karg coreos.inst.image_url)"
+imgfile="$(karg coreos.inst.image_file)"
+if [ -n "${imgurl}" ]; then
+    echo "ISO root provided but image is online, skiping ISO mount"
+    exit 0
+fi
+
 add_requires run-media-iso.mount default.target
 
 isoroot=$(getarg coreos.inst.isoroot= ||:)
