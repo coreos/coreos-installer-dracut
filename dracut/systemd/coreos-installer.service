@@ -2,8 +2,6 @@
 Description=CoreOS Installer
 
 After=coreos-installer.target
-# Network is enabled here
-After=nm-run.service
 
 ConditionKernelCommandLine=coreos.inst.install_dev
 OnFailure=emergency.target
