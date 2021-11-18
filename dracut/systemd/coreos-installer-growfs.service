@@ -6,6 +6,7 @@ After=coreos-installer.service
 Before=coreos-installer-reboot.service
 
 Requires=dev-disk-by\x2dlabel-root.device
+ConditionKernelCommandLine=coreos.inst.install_dev
 
 [Service]
 Type=oneshot
