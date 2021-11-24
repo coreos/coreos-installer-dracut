@@ -9,14 +9,17 @@ install_and_enable_unit() {
     systemctl -q --root="$initdir" add-requires "$target" "$unit" || exit 1
 }
 
+depends() {
+    echo clevis clevis-pin-null
+}
+
 install() {
-    inst_multiple gpg
-    inst_multiple gpg-agent
-    inst_multiple gpg-connect-agent
-    inst_multiple coreos-installer
 
     inst_multiple \
-    realpath \
+    coreos-installer \
+    gpg        \
+    gpg-agent  \
+    realpath   \
     basename   \
     blkid      \
     cat        \
@@ -32,30 +35,20 @@ install() {
     xfs_growfs \
     wc         \
     lsblk      \
-    wipefs
-
-    inst_multiple \
-        awk       \
-        cat       \
-        dd        \
-        grep      \
-        mktemp    \
-        partx     \
-        rm        \
-        sed       \
-        sfdisk    \
-        sgdisk    \
-        find
-        
-    inst_multiple -o \
-        clevis-encrypt-sss \
-        clevis-encrypt-tang \
-        clevis-encrypt-tpm2 \
-        clevis-luks-bind \
-        clevis-luks-common-functions \
-        clevis-luks-unlock \
-        pwmake \
-        tpm2_create
+    wipefs     \
+    awk        \
+    cat        \
+    dd         \
+    grep       \
+    mktemp     \
+    partx      \
+    rm         \
+    sed        \
+    sfdisk     \
+    sgdisk     \
+    find       \
+    gpg-connect-agent \
+    clevis-luks-unlock
 
     inst_simple "$moddir/coreos-installer-generator" \
         "$systemdutildir/system-generators/coreos-installer-generator"
@@ -76,8 +69,11 @@ install() {
         "default.target"
 
     inst_script "$moddir/coreos-installer-growfs" \
-        /usr/sbin/coreos-installer-growfs
+        /usr/libexec/coreos-installer-growfs
 
     inst_simple "$moddir/coreos-installer.target" \
         "${systemdsystemunitdir}/coreos-installer.target"
+
+    inst_simple "$moddir/coreos-installer-luks-open.service" \
+        "${systemdsystemunitdir}/coreos-installer-luks-open.service"
 }

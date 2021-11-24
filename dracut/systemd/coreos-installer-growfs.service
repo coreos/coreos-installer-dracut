@@ -10,5 +10,5 @@ ConditionKernelCommandLine=coreos.inst.install_dev
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/coreos-installer-growfs
+ExecStart=/usr/libexec/coreos-installer-growfs
 RemainAfterExit=yes
