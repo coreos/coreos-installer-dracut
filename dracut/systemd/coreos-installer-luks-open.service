@@ -1,0 +1,18 @@
+[Unit]
+Description=CoreOS LUKS Opener
+
+ConditionKernelCommandLine=coreos.inst.crypt_root
+After=coreos-installer.service
+Before=coreos-installer-growfs.service
+
+# This is our luks root label
+Requires=dev-disk-by\x2dlabel-crypt_root.device
+
+# Fail the boot if the disk opening fails.
+OnFailure=emergency.target
+OnFailureJobMode=isolate
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash -c "udevadm settle && clevis-luks-unlock -d $(realpath /dev/disk/by-label/crypt_root)"
+RemainAfterExit=yes

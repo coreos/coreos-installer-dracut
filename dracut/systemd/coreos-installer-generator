@@ -51,7 +51,20 @@ if [ -n "$(karg coreos.inst.install_dev)" ]; then
     fi
 fi
 
-# if we're not running in dracut, skip
+if karg_bool coreos.inst.crypt_root; then
+    add_requires coreos-installer-luks-open.service default.target
+
+    dropindir="${UNIT_DIR}"/coreos-installer-growfs.service.d
+    mkdir -p "${dropindir}"
+    dropin=${dropindir}/luks-open.conf
+    cat > ${dropin} << EOF
+[Unit]
+After=coreos-installer-luks-open.service
+Requires=coreos-installer-luks-open.service
+EOF
+fi
+
+# if we don't have isoroot, disk comes from image_url and we don't need run-media-iso.mount
 if [ -z "$(karg coreos.inst.isoroot)" ]; then
     exit 0
 fi
