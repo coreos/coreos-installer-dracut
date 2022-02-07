@@ -1,0 +1,10 @@
+[Unit]
+Description=Power off after CoreOS Installer
+After=coreos-installer.service
+OnFailure=emergency.target
+OnFailureJobMode=replace-irreversibly
+ConditionPathExists=/run/coreos-installer-poweroff
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/systemctl --no-block --force poweroff
