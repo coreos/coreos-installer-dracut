@@ -45,9 +45,14 @@ if [ -n "$(karg coreos.inst.install_dev)" ]; then
 
     dmesg -n 1
 
-    # Create precondition for coreos-installer-reboot.service if requested
-    if ! karg_bool coreos.inst.skip_reboot; then
+    > /run/coreos-installer-poweroff
+
+    if karg_bool coreos.inst.skip_reboot; then
+        rm -rf /run/coreos-installer-poweroff
+    fi
+    if karg_bool coreos.inst.reboot; then
         > /run/coreos-installer-reboot
+        rm -rf /run/coreos-installer-poweroff
     fi
 fi
 
