@@ -3,7 +3,7 @@ Description=Grow root filesystem
 DefaultDependencies=false
 
 After=coreos-installer.service
-Before=coreos-installer-reboot.service
+Before=coreos-installer-poweroff.service
 
 Requires=dev-disk-by\x2dlabel-root.device
 ConditionKernelCommandLine=coreos.inst.install_dev
