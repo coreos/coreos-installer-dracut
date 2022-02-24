@@ -48,10 +48,12 @@ if [ -n "$(karg coreos.inst.install_dev)" ]; then
     > /run/coreos-installer-poweroff
 
     if karg_bool coreos.inst.skip_reboot; then
+        > /run/coreos-installer-noreboot
         rm -rf /run/coreos-installer-poweroff
     fi
     if karg_bool coreos.inst.reboot; then
         > /run/coreos-installer-reboot
+        rm -rf /run/coreos-installer-noreboot
         rm -rf /run/coreos-installer-poweroff
     fi
 fi
