@@ -2,7 +2,7 @@
 Description=Give Login Shell After CoreOS Installer
 Requires=coreos-installer.service
 After=coreos-installer.service
-ConditionPathExists=!/run/coreos-installer-reboot
+ConditionPathExists=/run/coreos-installer-noreboot
 ConditionKernelCommandLine=coreos.inst.install_dev
 
 [Service]
