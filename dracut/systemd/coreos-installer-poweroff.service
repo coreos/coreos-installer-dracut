@@ -7,4 +7,4 @@ ConditionPathExists=/run/coreos-installer-poweroff
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/systemctl --no-block --force poweroff
+ExecStart=/usr/bin/systemctl --no-block poweroff
