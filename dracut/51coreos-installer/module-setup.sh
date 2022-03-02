@@ -68,9 +68,6 @@ install() {
     install_and_enable_unit "coreos-installer-poweroff.service" \
         "default.target"
 
-    install_and_enable_unit "coreos-installer-growfs.service" \
-        "default.target"
-
     inst_script "$moddir/coreos-installer-growfs" \
         /usr/libexec/coreos-installer-growfs
 
