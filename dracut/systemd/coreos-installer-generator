@@ -39,6 +39,7 @@ karg_bool() {
     esac
 }
 
+action="poweroff"
 if [ -n "$(karg coreos.inst.install_dev)" ]; then
     ln -sf "/usr/lib/systemd/system/coreos-installer.target" \
         "${UNIT_DIR}/default.target"
@@ -48,10 +49,12 @@ if [ -n "$(karg coreos.inst.install_dev)" ]; then
     > /run/coreos-installer-poweroff
 
     if karg_bool coreos.inst.skip_reboot; then
+    action="noreboot"
         > /run/coreos-installer-noreboot
         rm -rf /run/coreos-installer-poweroff
     fi
     if karg_bool coreos.inst.reboot; then
+        action="reboot"
         > /run/coreos-installer-reboot
         rm -rf /run/coreos-installer-noreboot
         rm -rf /run/coreos-installer-poweroff
@@ -70,6 +73,25 @@ After=coreos-installer-luks-open.service
 Requires=coreos-installer-luks-open.service
 EOF
 fi
+
+cat >"${UNIT_DIR}/coreos-installer-growfs.service" <<EOF
+[Unit]
+Description=Grow root filesystem
+DefaultDependencies=false
+
+After=coreos-installer.service
+Before=coreos-installer-${action}.service
+
+Requires=dev-disk-by\x2dlabel-root.device
+ConditionKernelCommandLine=coreos.inst.install_dev
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/coreos-installer-growfs
+RemainAfterExit=yes
+EOF
+
+add_requires coreos-installer-growfs.service default.target
 
 # if we don't have isoroot, disk comes from image_url and we don't need run-media-iso.mount
 if [ -z "$(karg coreos.inst.isoroot)" ]; then
