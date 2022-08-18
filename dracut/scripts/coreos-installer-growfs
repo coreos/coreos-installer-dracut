@@ -4,39 +4,28 @@ set -euo pipefail
 path=/growroot
 udevadm settle
 
+disk=$(lsblk -ln -o NAME,TYPE | grep disk | awk '{print $1}')
+if [[ -z ${disk} ]]; then
+    exit 1
+fi
+growpart /dev/${disk} 4
+
+crypt=$(lsblk -ln -o NAME,TYPE | grep crypt | awk '{print $1}')
+if [[ -z ${crypt} ]]; then
+    exit 1
+fi
+cryptsetup resize ${crypt}
+lvm pvresize /dev/mapper/${crypt}
+
+lvm vgchange -ay rootvg
+
+if [[ ! -e /dev/disk/by-label/root ]]; then
+    dm=$(blkid --label root)
+    if [[ -z ${dm} ]]; then
+        exit 1
+    fi
+    ln -s ${dm} /dev/disk/by-label/root
+fi
+
 mkdir -p ${path}
 mount -t xfs /dev/disk/by-label/root ${path}
-
-majmin=$(findmnt -nvr -o MAJ:MIN "$path")
-
-cryptsetup=0
-dm_name=""
-src=$(findmnt -nvr -o SOURCE "$path")
-if [[ "${src}" =~ /dev/mapper ]]; then
-    dm_name=$(dmsetup info ${src} -C -o name --noheadings) || true
-    if [[ "$(dmsetup info ${dm_name} -C -o uuid --noheadings)" =~ "CRYPT-LUKS2" ]]; then
-        majmin=$(dmsetup table ${dm_name} | cut -d " " -f7)
-        cryptsetup=1
-    fi
-fi
-
-devpath=$(realpath "/sys/dev/block/$majmin")
-partition=$(cat "$devpath/partition")
-parent_path=$(dirname "$devpath")
-parent_device=/dev/$(basename "${parent_path}")
-
-growpart "${parent_device}" "${partition}" || true
-
-if [ "${cryptsetup}" -eq 1 ]; then
-    id="$(cryptsetup luksDump "${parent_device}${partition}" | sed -rn 's|^\s+([0-9]+): clevis|\1|p')"
-    token=$(cryptsetup token export --token-id "${id}" "${parent_device}${partition}")
-    key=$(echo ${token} \
-        | jose fmt -j- -Og jwe -o- \
-        | jose jwe fmt -i- -c \
-        | tr -d '\n' \
-        | clevis decrypt)
-
-    echo $key | cryptsetup resize "${dm_name}" -
-fi
-
-xfs_growfs $path
