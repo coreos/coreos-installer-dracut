@@ -77,7 +77,7 @@ for item in "${cmdline[@]}"; do
     done
 done
 if [ -n "${firstboot_args}" ]; then
-    args+=("--append-karg" "rd.neednet=1 ${firstboot_args}")
+    args+=("--firstboot-args" "rd.neednet=1 ${firstboot_args}")
 fi
 
 append_kargs=( )
