@@ -1,3 +1,5 @@
+COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
+
 # Ensure "install" isn't the default
 .PHONY: all
 all:
@@ -19,3 +21,26 @@ install:
 		dracut/scripts/coreos-installer-growfs \
 		dracut/scripts/coreos-installer-service \
 		dracut/systemd/coreos-installer-generator
+
+RPM_SPECFILE=rpmbuild/SPECS/coreos-installer-dracut-$(COMMIT).spec
+RPM_TARBALL=rpmbuild/SOURCES/coreos-installer-dracut-$(COMMIT).tar.gz
+
+$(RPM_SPECFILE):
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	(echo "%global commit $(COMMIT)"; git show HEAD:test/coreos-installer-dracut.spec) > $(RPM_SPECFILE)
+
+$(RPM_TARBALL):
+	mkdir -p $(CURDIR)/rpmbuild/SOURCES
+	git archive --prefix=coreos-installer-dracut-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+
+.PHONY: srpm
+srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bs \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(RPM_SPECFILE)
+
+.PHONY: rpm
+rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(RPM_SPECFILE)
