@@ -115,15 +115,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Install git before use actions/checkout@3 to checkout .git folder
+      - name: Install required packages
+        run: sudo dnf install -y httpd git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-rpm-macros python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
       - name: Checkout PR code
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
           path: coreos-installer-dracut
-
-      - name: Install required packages
-        run: sudo dnf install -y httpd git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-rpm-macros python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
 
       - name: Checkout osbuild code
         uses: actions/checkout@v3
@@ -193,15 +194,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Install git before use actions/checkout@3 to checkout .git folder
+      - name: Install required packages
+        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-rpm-macros python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
       - name: Clone repository
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
           path: coreos-installer-dracut
-
-      - name: Install required packages
-        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-rpm-macros python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
 
       - name: Checkout osbuild code
         uses: actions/checkout@v3
@@ -271,15 +273,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Install git before use actions/checkout@3 to checkout .git folder
+      - name: Install required packages
+        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-compilers-golang-compiler python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
       - name: Clone repository
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
           path: coreos-installer-dracut
-
-      - name: Install required packages
-        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-compilers-golang-compiler python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
 
       - name: Checkout osbuild code
         uses: actions/checkout@v3
@@ -349,15 +352,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Install git before use actions/checkout@3 to checkout .git folder
+      - name: Install required packages
+        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-compilers-golang-compiler python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
       - name: Clone repository
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
           path: coreos-installer-dracut
-
-      - name: Install required packages
-        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-compilers-golang-compiler python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
 
       - name: Checkout osbuild code
         uses: actions/checkout@v3
