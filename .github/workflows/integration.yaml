@@ -1,0 +1,408 @@
+---
+name: Integration test
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  pr-info:
+    if: ${{ github.event.issue.pull_request &&
+            (startsWith(github.event.comment.body, '/test-all') ||
+            startsWith(github.event.comment.body, '/test-9') ||
+            startsWith(github.event.comment.body, '/test-8') ||
+            startsWith(github.event.comment.body, '/test-rhel-9-2') ||
+            startsWith(github.event.comment.body, '/test-rhel-8-8') ||
+            startsWith(github.event.comment.body, '/test-cs9') ||
+            startsWith(github.event.comment.body, '/test-cs8')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query author repository permissions
+        uses: octokit/request-action@v2.x
+        id: user_permission
+        with:
+          route: GET /repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # restrict running of tests to users with admin or write permission for the repository
+      # see https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#get-repository-permissions-for-a-user
+      - name: Check if user does have correct permissions
+        if: contains('admin write', fromJson(steps.user_permission.outputs.data).permission)
+        id: check_user_perm
+        run: |
+          echo "User '${{ github.event.sender.login }}' has permission '${{ fromJson(steps.user_permission.outputs.data).permission }}' allowed values: 'admin', 'write'"
+          echo "allowed_user=true" >> $GITHUB_OUTPUT
+      - name: Get information for pull request
+        uses: octokit/request-action@v2.x
+        id: pr-api
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    outputs:
+      allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
+      sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
+
+  comment-info:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR comment analysis
+        id: comment-analysis
+        run: |
+          comment_content="${{ github.event.comment.body }}"
+          comment_array=($comment_content)
+          comment_arg_len=${#comment_array[@]}
+
+          echo ${comment_array[@]}
+          echo $comment_arg_len
+
+          # Default to osbuild and osbuild-composer main branch
+          OSBUILD_REPO="osbuild/osbuild"
+          OSBUILD_BRANCH="main"
+          OSBUILD_COMPOSER_REPO="osbuild/osbuild-composer"
+          OSBUILD_COMPOSER_BRANCH="main"
+
+          for item in "${comment_array[@]}"; do
+              if [[ "$item" =~ "/osbuild:" ]]; then
+                  OSBUILD_REPO="$(echo $item | cut -d: -f1)"
+                  OSBUILD_BRANCH="$(echo $item | cut -d: -f2)"
+              fi
+              if [[ "$item" =~ "/osbuild-composer:" ]]; then
+                  OSBUILD_COMPOSER_REPO="$(echo $item | cut -d: -f1)"
+                  OSBUILD_COMPOSER_BRANCH="$(echo $item | cut -d: -f2)"
+              fi
+          done
+
+          echo $OSBUILD_REPO
+          echo $OSBUILD_BRANCH
+          echo $OSBUILD_COMPOSER_REPO
+          echo $OSBUILD_COMPOSER_BRANCH
+
+          echo "osbuild_repo=$OSBUILD_REPO" >> $GITHUB_OUTPUT
+          echo "osbuild_branch=$OSBUILD_BRANCH" >> $GITHUB_OUTPUT
+          echo "osbuild-composer_repo=$OSBUILD_COMPOSER_REPO" >> $GITHUB_OUTPUT
+          echo "osbuild-composer_branch=$OSBUILD_COMPOSER_BRANCH" >> $GITHUB_OUTPUT
+
+    outputs:
+      osbuild_repo: ${{ steps.comment-analysis.outputs.osbuild_repo }}
+      osbuild_branch: ${{ steps.comment-analysis.outputs.osbuild_branch }}
+      osbuild-composer_repo: ${{ steps.comment-analysis.outputs.osbuild-composer_repo }}
+      osbuild-composer_branch: ${{ steps.comment-analysis.outputs.osbuild-composer_branch }}
+
+
+  rhel-9-2:
+    needs: [pr-info, comment-info]
+    if: ${{ startsWith(github.event.comment.body, '/test-all') ||
+            startsWith(github.event.comment.body, '/test-9') ||
+            startsWith(github.event.comment.body, '/test-rhel-9-2')}}
+    runs-on: [kite, x86_64, rhos-01, rhel-9-2, large]
+    env:
+      STATUS_NAME: edge-simplified-9.2
+
+    steps:
+      - name: Create in-progress status
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: pending
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout PR code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+          path: coreos-installer-dracut
+
+      - name: Install required packages
+        run: sudo dnf install -y httpd git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-rpm-macros python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
+      - name: Checkout osbuild code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild_branch }}
+          path: osbuild
+      - name: Build osbuild
+        run: make rpm
+        working-directory: ./osbuild
+
+      - name: Checkout osbuild-composer code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
+          path: osbuild-composer
+      - name: Build osbuild-composer
+        run: make rpm
+        working-directory: ./osbuild-composer
+
+      - name: Run prepare.sh
+        run: cp ./coreos-installer-dracut/test/prepare.sh . && ./prepare.sh
+        timeout-minutes: 20
+
+      - name: Run simplified-installer test
+        run: ./edge-simplified-installer.sh
+        working-directory: ./coreos-installer-dracut/test
+        timeout-minutes: 120
+
+      - name: Set result status
+        if: always()
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: ${{ job.status }}
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: edge-simplified-9.2
+          path: |
+            ./coreos-installer-dracut/test/*.json
+            ./coreos-installer-dracut/test/*.log
+
+  centos-stream-9:
+    needs: [pr-info, comment-info]
+    if: ${{ startsWith(github.event.comment.body, '/test-all') ||
+            startsWith(github.event.comment.body, '/test-9') ||
+            startsWith(github.event.comment.body, '/test-cs9')}}
+    runs-on: [kite, x86_64, gcp, centos-stream-9, large]
+    env:
+      STATUS_NAME: edge-simplified-cs9
+
+    steps:
+      - name: Create in-progress status
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: pending
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+          path: coreos-installer-dracut
+
+      - name: Install required packages
+        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-rpm-macros python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
+      - name: Checkout osbuild code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild_branch }}
+          path: osbuild
+      - name: Build osbuild
+        run: make rpm
+        working-directory: ./osbuild
+
+      - name: Checkout osbuild-composer code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
+          path: osbuild-composer
+      - name: Build osbuild-composer
+        run: make rpm
+        working-directory: ./osbuild-composer
+
+      - name: Run prepare.sh
+        run: cp ./coreos-installer-dracut/test/prepare.sh . && ./prepare.sh
+        timeout-minutes: 20
+
+      - name: Run simplified-installer test
+        run: ./edge-simplified-installer.sh
+        working-directory: ./coreos-installer-dracut/test
+        timeout-minutes: 120
+
+      - name: Set result status
+        if: always()
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: ${{ job.status }}
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: edge-simplified-cs9
+          path: |
+            ./coreos-installer-dracut/test/*.json
+            ./coreos-installer-dracut/test/*.log
+
+  rhel-8-8:
+    needs: [pr-info, comment-info]
+    if: ${{ startsWith(github.event.comment.body, '/test-all') ||
+            startsWith(github.event.comment.body, '/test-8') ||
+            startsWith(github.event.comment.body, '/test-rhel-8-8')}}
+    runs-on: [kite, x86_64, rhos-01, rhel-8-8, large]
+    env:
+      STATUS_NAME: edge-simplified-8.8
+
+    steps:
+      - name: Create in-progress status
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: pending
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+          path: coreos-installer-dracut
+
+      - name: Install required packages
+        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-compilers-golang-compiler python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
+      - name: Checkout osbuild code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild_branch }}
+          path: osbuild
+      - name: Build osbuild
+        run: make rpm
+        working-directory: ./osbuild
+
+      - name: Checkout osbuild-composer code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
+          path: osbuild-composer
+      - name: Build osbuild-composer
+        run: make rpm
+        working-directory: ./osbuild-composer
+
+      - name: Run prepare.sh
+        run: cp ./coreos-installer-dracut/test/prepare.sh . && ./prepare.sh
+        timeout-minutes: 20
+
+      - name: Run simplified-installer test
+        run: ./edge-simplified-installer.sh
+        working-directory: ./coreos-installer-dracut/test
+        timeout-minutes: 120
+
+      - name: Set result status
+        if: always()
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: ${{ job.status }}
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: edge-simplified-8.8
+          path: |
+            ./coreos-installer-dracut/test/*.json
+            ./coreos-installer-dracut/test/*.log
+
+  centos-stream-8:
+    needs: [pr-info, comment-info]
+    if: ${{ startsWith(github.event.comment.body, '/test-all') ||
+            startsWith(github.event.comment.body, '/test-8') ||
+            startsWith(github.event.comment.body, '/test-cs8')}}
+    runs-on: [kite, x86_64, gcp, centos-stream-8, large]
+    env:
+      STATUS_NAME: edge-simplified-cs8
+
+    steps:
+      - name: Create in-progress status
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: pending
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+          path: coreos-installer-dracut
+
+      - name: Install required packages
+        run: sudo dnf install -y git make systemd krb5-devel python3-docutils gpgme-devel libassuan-devel systemd-rpm-macros rpmdevtools golang go-compilers-golang-compiler python3-devel selinux-policy-devel createrepo_c rust-toolset openssl-devel xz-devel libzstd-devel gnupg2
+
+      - name: Checkout osbuild code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild_branch }}
+          path: osbuild
+      - name: Build osbuild
+        run: make rpm
+        working-directory: ./osbuild
+
+      - name: Checkout osbuild-composer code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
+          ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
+          path: osbuild-composer
+      - name: Build osbuild-composer
+        run: make rpm
+        working-directory: ./osbuild-composer
+
+      - name: Run prepare.sh
+        run: cp ./coreos-installer-dracut/test/prepare.sh . && ./prepare.sh
+        timeout-minutes: 20
+
+      - name: Run simplified-installer test
+        run: ./edge-simplified-installer.sh
+        working-directory: ./coreos-installer-dracut/test
+        timeout-minutes: 120
+
+      - name: Set result status
+        if: always()
+        uses: octokit/request-action@v2.x
+        with:
+          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
+          context: ${{ env.STATUS_NAME }}
+          state: ${{ job.status }}
+          target_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: edge-simplified-cs8
+          path: |
+            ./coreos-installer-dracut/test/*.json
+            ./coreos-installer-dracut/test/*.log
