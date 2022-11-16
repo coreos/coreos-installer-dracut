@@ -4,11 +4,32 @@ set -euo pipefail
 path=/growroot
 udevadm settle
 
-disk=$(lsblk -ln -o NAME,TYPE | grep disk | awk '{print $1}')
-if [[ -z ${disk} ]]; then
-    exit 1
+#Following function takes name as argument e.g. coreos.inst.install_dev and finds its value from
+#cmdline (which is passed at boot time)
+cmdline=( $(</proc/cmdline) )
+karg() {
+    local name="$1" value=""
+    for arg in "${cmdline[@]}"; do
+        if [[ "${arg%%=*}" == "${name}" ]]; then
+            value="${arg#*=}"
+        fi
+    done
+    echo "${value}"
+}
+
+# Get installation device
+installation_device="$(karg coreos.inst.install_dev)"
+if [ "${installation_device##*/}" = "${installation_device}" ]; then
+    # karg contains no slashes.  Prepend "/dev/" for compatibility.
+    installation_device="/dev/${installation_device}"
 fi
-growpart /dev/${disk} 4
+
+#Get number of partitions avaiable for the installation_device and choose last 
+#partition to grow till available disk size.
+device=${installation_device##*/}
+partition=$(grep -c "${device}"[0-9] /proc/partitions)
+growpart $installation_device $partition
+echo "growpart executed on "$installation_device" "$partition" " 
 
 crypt=$(lsblk -ln -o NAME,TYPE | grep crypt | awk '{print $1}')
 if [[ -z ${crypt} ]]; then
