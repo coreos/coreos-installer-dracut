@@ -374,10 +374,13 @@ sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/disk.img.xz/coreos.inst
 greenprint "📋 Create libvirt image disk"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-httpboot.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+LIBVIRT_FAKE_USB_PATH=/var/lib/libvirt/images/usb.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_FAKE_USB_PATH}" 16G
 
 greenprint "📋 Install edge vm via http boot"
 sudo virt-install --name="${IMAGE_KEY}-httpboot"\
                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                  --disk path="${LIBVIRT_FAKE_USB_PATH}",format=qcow2 \
                   --ram 3072 \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
