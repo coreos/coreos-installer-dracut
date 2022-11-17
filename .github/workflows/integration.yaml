@@ -153,6 +153,8 @@ jobs:
       - name: Run simplified-installer test
         run: ./edge-simplified-installer.sh
         working-directory: ./coreos-installer-dracut/test
+        env:
+          DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
         timeout-minutes: 120
 
       - name: Set result status
@@ -232,6 +234,8 @@ jobs:
       - name: Run simplified-installer test
         run: ./edge-simplified-installer.sh
         working-directory: ./coreos-installer-dracut/test
+        env:
+          DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
         timeout-minutes: 120
 
       - name: Set result status
@@ -311,6 +315,8 @@ jobs:
       - name: Run simplified-installer test
         run: ./edge-simplified-installer.sh
         working-directory: ./coreos-installer-dracut/test
+        env:
+          DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
         timeout-minutes: 120
 
       - name: Set result status
@@ -390,6 +396,8 @@ jobs:
       - name: Run simplified-installer test
         run: ./edge-simplified-installer.sh
         working-directory: ./coreos-installer-dracut/test
+        env:
+          DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
         timeout-minutes: 120
 
       - name: Set result status
