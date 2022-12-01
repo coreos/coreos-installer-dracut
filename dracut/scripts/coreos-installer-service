@@ -80,6 +80,7 @@ if [ -n "${firstboot_args}" ]; then
     args+=("--firstboot-args" "rd.neednet=1 ${firstboot_args}")
 fi
 
+# TODO(runcom): disable this to avoid conflicts with osbuild kargs injection
 append_kargs=( )
 kargs append_kargs coreos.inst.append
 for k in "${append_kargs[@]}"; do
@@ -94,6 +95,14 @@ imgfile="$(karg coreos.inst.image_file)"
 if [ -z "${imgurl}" -a -z "${imgfile}" ]; then
     echo "No image location provided."
     exit 1
+fi
+
+if [ -f /run/media/iso/ignition_url ]; then
+    ign_url="$(cat /run/media/iso/ignition_url)"
+    args+=("--ignition-url" "$ign_url")
+fi
+if [ -f /run/media/iso/ignition_config ]; then
+    args+=("--ignition-file" "/run/media/iso/ignition_config")
 fi
 
 # Other args that should just be copied over
