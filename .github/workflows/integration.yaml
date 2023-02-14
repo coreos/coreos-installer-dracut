@@ -299,23 +299,29 @@ jobs:
           fetch-depth: 0
           path: coreos-installer-dracut
 
+      # Only run when PR has osbuild dependence
       - name: Checkout osbuild code
+        if: ${{ needs.comment-info.outputs.osbuild_branch != 'main' }}
         uses: actions/checkout@v3
         with:
           repository: ${{ needs.comment-info.outputs.osbuild_repo }}
           ref: ${{ needs.comment-info.outputs.osbuild_branch }}
           path: osbuild
       - name: Build osbuild
+        if: ${{ needs.comment-info.outputs.osbuild_branch != 'main' }}
         run: make rpm
         working-directory: ./osbuild
 
+      # Only run when PR has osbuild-composer dependence
       - name: Checkout osbuild-composer code
+        if: ${{ needs.comment-info.outputs.osbuild-composer_branch != 'main' }}
         uses: actions/checkout@v3
         with:
           repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
           ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
           path: osbuild-composer
       - name: Build osbuild-composer
+        if: ${{ needs.comment-info.outputs.osbuild-composer_branch != 'main' }}
         run: make rpm
         working-directory: ./osbuild-composer
 
@@ -381,23 +387,29 @@ jobs:
           fetch-depth: 0
           path: coreos-installer-dracut
 
+      # Only run when PR has osbuild dependence
       - name: Checkout osbuild code
+        if: ${{ needs.comment-info.outputs.osbuild_branch != 'main' }}
         uses: actions/checkout@v3
         with:
           repository: ${{ needs.comment-info.outputs.osbuild_repo }}
           ref: ${{ needs.comment-info.outputs.osbuild_branch }}
           path: osbuild
       - name: Build osbuild
+        if: ${{ needs.comment-info.outputs.osbuild_branch != 'main' }}
         run: make rpm
         working-directory: ./osbuild
 
+      # Only run when PR has osbuild-composer dependence
       - name: Checkout osbuild-composer code
+        if: ${{ needs.comment-info.outputs.osbuild-composer_branch != 'main' }}
         uses: actions/checkout@v3
         with:
           repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
           ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
           path: osbuild-composer
       - name: Build osbuild-composer
+        if: ${{ needs.comment-info.outputs.osbuild-composer_branch != 'main' }}
         run: make rpm
         working-directory: ./osbuild-composer
 
@@ -463,23 +475,29 @@ jobs:
           fetch-depth: 0
           path: coreos-installer-dracut
 
+      # Only run when PR has osbuild dependence
       - name: Checkout osbuild code
+        if: ${{ needs.comment-info.outputs.osbuild_branch != 'main' }}
         uses: actions/checkout@v3
         with:
           repository: ${{ needs.comment-info.outputs.osbuild_repo }}
           ref: ${{ needs.comment-info.outputs.osbuild_branch }}
           path: osbuild
       - name: Build osbuild
+        if: ${{ needs.comment-info.outputs.osbuild_branch != 'main' }}
         run: make rpm
         working-directory: ./osbuild
 
+      # Only run when PR has osbuild-composer dependence
       - name: Checkout osbuild-composer code
+        if: ${{ needs.comment-info.outputs.osbuild-composer_branch != 'main' }}
         uses: actions/checkout@v3
         with:
           repository: ${{ needs.comment-info.outputs.osbuild-composer_repo }}
           ref: ${{ needs.comment-info.outputs.osbuild-composer_branch }}
           path: osbuild-composer
       - name: Build osbuild-composer
+        if: ${{ needs.comment-info.outputs.osbuild-composer_branch != 'main' }}
         run: make rpm
         working-directory: ./osbuild-composer
 
