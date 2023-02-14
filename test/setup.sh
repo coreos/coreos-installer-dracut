@@ -40,11 +40,6 @@ function greenprint {
 sudo dnf install -y glibc-langpack-en
 sudo localectl set-locale LANG=en_US.UTF-8
 
-# Install ansible
-sudo dnf install -y --nogpgcheck ansible-core
-# To support stdout_callback = yaml
-sudo ansible-galaxy collection install community.general
-
 # Install required packages
 greenprint "Install required packages"
 sudo dnf install -y --nogpgcheck httpd osbuild osbuild-composer composer-cli podman skopeo wget firewalld lorax xorriso curl jq expect qemu-img qemu-kvm libvirt-client libvirt-daemon-kvm virt-install rpmdevtools
