@@ -12,7 +12,7 @@ PERSIST_DRACUT_NET_PARAMS=("ip" "ifname" "rd.route" "bootdev" "BOOTIF" "rd.booti
 
 args=("install")
 
-cmdline=( $(</proc/cmdline) )
+IFS=" " read -r -a cmdline <<< "$(</proc/cmdline)"
 karg() {
     local name="$1" value="$2"
     for arg in "${cmdline[@]}"; do
@@ -29,13 +29,14 @@ kargs() {
     for arg in "${cmdline[@]}"; do
         if [[ "${arg%%=*}" == "${name}" ]]; then
             value="${arg#*=}"
-	    kargs+=($value)
+            kargs+=("$value")
         fi
     done
 }
 
 karg_bool() {
-    local value=$(karg "$@")
+    local value
+    value=$(karg "$@")
     case "$value" in
         ""|0|no|off) return 1;;
         *) return 0;;
@@ -46,8 +47,9 @@ copy_arg() {
     local arg="$1"; shift
     local opt="$1"; shift
 
-    local value="$(karg "${arg}")"
-    if [ ! -z "${value}" ]; then
+    local value
+    value="$(karg "${arg}")"
+    if [ -n "${value}" ]; then
         args+=("${opt}" "${value}")
     fi
 }
@@ -87,12 +89,12 @@ for k in "${append_kargs[@]}"; do
     # can also implode the array and use the flag just once but meh
     # can also have the kargs function just return a string w/o the
     # additional array defined here
-	args+=("--append-karg" $k)
+    args+=("--append-karg" "$k")
 done
 
 imgurl="$(karg coreos.inst.image_url)"
 imgfile="$(karg coreos.inst.image_file)"
-if [ -z "${imgurl}" -a -z "${imgfile}" ]; then
+if [ -z "${imgurl}" ] && [ -z "${imgfile}" ]; then
     echo "No image location provided."
     exit 1
 fi
@@ -120,5 +122,5 @@ fi
 udevadm settle
 
 # Install
-echo "coreos-installer ${args[@]}"
+echo "coreos-installer " "${args[@]}"
 coreos-installer "${args[@]}"

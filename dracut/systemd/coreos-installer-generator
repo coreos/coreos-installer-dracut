@@ -20,7 +20,7 @@ add_requires() {
     ln -sf "../${name}" "${requires_dir}/${name}"
 }
 
-cmdline=( $(</proc/cmdline) )
+IFS=" " read -r -a cmdline <<< "$(</proc/cmdline)"
 karg() {
     local name="$1" value="$2"
     for arg in "${cmdline[@]}"; do
@@ -32,7 +32,8 @@ karg() {
 }
 
 karg_bool() {
-    local value=$(karg "$@")
+    local value
+    value=$(karg "$@")
     case "$value" in
         ""|0|no|off) return 1;;
         *) return 0;;
@@ -64,7 +65,7 @@ if karg_bool coreos.inst.crypt_root; then
     dropindir="${UNIT_DIR}"/coreos-installer-growfs.service.d
     mkdir -p "${dropindir}"
     dropin=${dropindir}/luks-open.conf
-    cat > ${dropin} << EOF
+    cat > "${dropin}" << EOF
 [Unit]
 After=coreos-installer-luks-open.service
 Requires=coreos-installer-luks-open.service
