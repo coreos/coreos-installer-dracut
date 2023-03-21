@@ -49,4 +49,3 @@ if [[ ! -e /dev/disk/by-label/root ]]; then
 fi
 
 mkdir -p ${path}
-mount -t xfs /dev/disk/by-label/root ${path}
