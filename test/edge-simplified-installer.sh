@@ -37,26 +37,14 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 EDGE_USER_PASSWORD=foobar
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.8")
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8-unknown"
-        USB_INSTALLATION="false"
-        ;;
-    "rhel-9.2")
+    "rhel-9.3")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
-        USB_INSTALLATION="true"
-        ;;
-    "centos-8")
-        OSTREE_REF="centos/8/${ARCH}/edge"
-        OS_VARIANT="centos-stream8"
-        USB_INSTALLATION="false"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
-        USB_INSTALLATION="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -169,9 +157,7 @@ clean_up () {
     fi
     sudo virsh undefine "${IMAGE_KEY}" --nvram
     sudo virsh vol-delete --pool images "${IMAGE_KEY}.qcow2"
-    if [[ "$USB_INSTALLATION" == "true" ]]; then
-        sudo virsh vol-delete --pool images "usb.qcow2"
-    fi
+    sudo virsh vol-delete --pool images "usb.qcow2"
 
     # Remove simplified installer ISO file
     sudo rm -rf "$ISO_FILENAME"
@@ -353,45 +339,27 @@ greenprint "📋 Create libvirt image disk"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
-if [[ "$USB_INSTALLATION" == "true" ]]; then
-    # Create a disk to simulate USB device to test USB installation
-    # New growfs service dealing with LVM in simplified installer breaks USB installation
-    LIBVIRT_FAKE_USB_PATH=/var/lib/libvirt/images/usb.qcow2
-    sudo qemu-img create -f qcow2 "${LIBVIRT_FAKE_USB_PATH}" 16G
+# Create a disk to simulate USB device to test USB installation
+# New growfs service dealing with LVM in simplified installer breaks USB installation
+LIBVIRT_FAKE_USB_PATH=/var/lib/libvirt/images/usb.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_FAKE_USB_PATH}" 16G
 
-    greenprint "📋 Install edge vm via simplified installer with USB attached"
-    sudo virt-install --name="${IMAGE_KEY}"\
-                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                    --disk path="${LIBVIRT_FAKE_USB_PATH}",format=qcow2 \
-                    --ram 2048 \
-                    --vcpus 2 \
-                    --network network=integration,mac=34:49:22:B0:83:30 \
-                    --os-type linux \
-                    --os-variant "$OS_VARIANT" \
-                    --boot "${BOOT_ARGS}" \
-                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
-                    --nographics \
-                    --noautoconsole \
-                    --wait=-1 \
-                    --noreboot
-else
-    greenprint "📋 Install edge vm via simplified installer"
-    sudo virt-install --name="${IMAGE_KEY}"\
-                      --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                      --ram 2048 \
-                      --vcpus 2 \
-                      --network network=integration,mac=34:49:22:B0:83:30 \
-                      --os-type linux \
-                      --os-variant "$OS_VARIANT" \
-                      --boot "${BOOT_ARGS}" \
-                      --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                      --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
-                      --nographics \
-                      --noautoconsole \
-                      --wait=-1 \
-                      --noreboot
-fi
+greenprint "📋 Install edge vm via simplified installer with USB attached"
+sudo virt-install --name="${IMAGE_KEY}"\
+                --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                --disk path="${LIBVIRT_FAKE_USB_PATH}",format=qcow2 \
+                --ram 2048 \
+                --vcpus 2 \
+                --network network=integration,mac=34:49:22:B0:83:30 \
+                --os-type linux \
+                --os-variant "$OS_VARIANT" \
+                --boot "${BOOT_ARGS}" \
+                --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
+                --nographics \
+                --noautoconsole \
+                --wait=-1 \
+                --noreboot
 
 # Start VM.
 greenprint "💻 Start HTTP BOOT VM"
