@@ -42,24 +42,16 @@ sudo localectl set-locale LANG=en_US.UTF-8
 
 # Install required packages
 greenprint "Install required packages"
-sudo dnf install -y --nogpgcheck httpd osbuild osbuild-composer composer-cli podman skopeo wget firewalld lorax xorriso curl jq expect qemu-img qemu-kvm libvirt-client libvirt-daemon-kvm virt-install rpmdevtools
+sudo dnf install -y --nogpgcheck httpd osbuild osbuild-composer composer-cli podman skopeo wget firewalld lorax xorriso curl jq expect qemu-img qemu-kvm libvirt-client libvirt-daemon-kvm libvirt-daemon virt-install rpmdevtools
 
 # Customize repository
 sudo mkdir -p /etc/osbuild-composer/repositories
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.8")
-        sed "s/REPLACE_ME_HERE/${DOWNLOAD_NODE}/g" files/rhel-8-8-0.json | sudo tee /etc/osbuild-composer/repositories/rhel-88.json > /dev/null;;
-    "rhel-9.2")
-        sed "s/REPLACE_ME_HERE/${DOWNLOAD_NODE}/g" files/rhel-9-2-0.json | sudo tee /etc/osbuild-composer/repositories/rhel-92.json > /dev/null;;
-    "centos-8")
-        sudo cp files/centos-stream-8.json /etc/osbuild-composer/repositories/centos-8.json;;
+    "rhel-9.3")
+        sed "s/REPLACE_ME_HERE/${DOWNLOAD_NODE}/g" files/rhel-9-3-0.json | sudo tee /etc/osbuild-composer/repositories/rhel-93.json > /dev/null;;
     "centos-9")
         sudo cp files/centos-stream-9.json /etc/osbuild-composer/repositories/centos-9.json;;
-    "fedora-36")
-        ;;
-    "fedora-37")
-        ;;
     "fedora-38")
         ;;
     *)
