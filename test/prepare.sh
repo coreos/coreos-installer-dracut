@@ -29,6 +29,7 @@ sudo cp ./osbuild/rpmbuild/RPMS/noarch/* /var/www/html/source/ 2>/dev/null || :
 sudo cp ./osbuild-composer/rpmbuild/RPMS/x86_64/* /var/www/html/source/ 2>/dev/null || :
 sudo cp ./rpmbuild/RPMS/x86_64/* /var/www/html/source/ 2>/dev/null || :
 sudo createrepo_c /var/www/html/source
+sudo restorecon -Rv /var/www/html/source
 sudo ls -al /var/www/html/source
 
 # Create local repo to install osbuild and osbuild-composer with local built version

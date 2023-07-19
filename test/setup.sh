@@ -134,18 +134,6 @@ EOF
 # Basic weldr API status checking
 sudo composer-cli status show
 
-# Create source configuration file
-sudo tee "/tmp/source.toml" > /dev/null << EOF
-id = "source"
-name = "source"
-type = "yum-baseurl"
-url = "file:///var/www/html/source/"
-check_gpg = false
-system = false
-EOF
-
-sudo composer-cli sources add "/tmp/source.toml"
-
 # Source checking
 sudo composer-cli sources list
 for SOURCE in $(sudo composer-cli sources list); do
