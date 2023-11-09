@@ -11,7 +11,7 @@ jobs:
     if: ${{ github.event.issue.pull_request &&
             (startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
-            startsWith(github.event.comment.body, '/test-rhel-9-3') ||
+            startsWith(github.event.comment.body, '/test-rhel-9-4') ||
             startsWith(github.event.comment.body, '/test-cs9')) }}
     runs-on: ubuntu-latest
     steps:
@@ -43,14 +43,14 @@ jobs:
       allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
       sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
 
-  pre-rhel-9-3:
+  pre-rhel-9-4:
     needs: pr-info
     if: ${{ startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
-            startsWith(github.event.comment.body, '/test-rhel-9-3')}}
+            startsWith(github.event.comment.body, '/test-rhel-9-4')}}
     runs-on: ubuntu-latest
     env:
-      STATUS_NAME: edge-simplified-9.3
+      STATUS_NAME: edge-simplified-9.4
 
     steps:
       - name: Create in-progress status
@@ -134,14 +134,14 @@ jobs:
       osbuild-composer_branch: ${{ steps.comment-analysis.outputs.osbuild-composer_branch }}
 
 
-  rhel-9-3:
+  rhel-9-4:
     needs: [pr-info, comment-info]
     if: ${{ startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
-            startsWith(github.event.comment.body, '/test-rhel-9-3')}}
-    runs-on: [kite, x86_64, rhos-01, rhel-9-3, large]
+            startsWith(github.event.comment.body, '/test-rhel-9-4')}}
+    runs-on: [kite, x86_64, rhos-01, rhel-9-4, large]
     env:
-      STATUS_NAME: edge-simplified-9.3
+      STATUS_NAME: edge-simplified-9.4
 
     steps:
       - name: Create in-progress status
@@ -217,7 +217,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: ${{ always() }}
         with:
-          name: edge-simplified-9.3
+          name: edge-simplified-9.4
           path: |
             ./coreos-installer-dracut/test/*.json
             ./coreos-installer-dracut/test/*.log
