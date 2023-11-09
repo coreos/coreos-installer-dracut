@@ -48,8 +48,8 @@ sudo dnf install -y --nogpgcheck httpd osbuild osbuild-composer composer-cli pod
 sudo mkdir -p /etc/osbuild-composer/repositories
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-9.3")
-        sed "s/REPLACE_ME_HERE/${DOWNLOAD_NODE}/g" files/rhel-9-3-0.json | sudo tee /etc/osbuild-composer/repositories/rhel-93.json > /dev/null;;
+    "rhel-9.4")
+        sed "s/REPLACE_ME_HERE/${DOWNLOAD_NODE}/g" files/rhel-9-4-0.json | sudo tee /etc/osbuild-composer/repositories/rhel-94.json > /dev/null;;
     "centos-9")
         sudo cp files/centos-stream-9.json /etc/osbuild-composer/repositories/centos-9.json;;
     "fedora-38")
