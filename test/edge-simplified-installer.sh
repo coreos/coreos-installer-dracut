@@ -37,7 +37,7 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 EDGE_USER_PASSWORD=foobar
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-9.3")
+    "rhel-9.4")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         ;;
