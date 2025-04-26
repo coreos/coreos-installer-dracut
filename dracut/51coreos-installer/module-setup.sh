@@ -57,19 +57,19 @@ install() {
         "/usr/libexec/coreos-installer-service"
 
     install_and_enable_unit "coreos-installer.service" \
-        "default.target"
+        "initrd.target"
 
     install_and_enable_unit "coreos-installer-reboot.service" \
-        "default.target"
+        "initrd.target"
 
     install_and_enable_unit "coreos-installer-noreboot.service" \
-        "default.target"
+        "initrd.target"
 
     install_and_enable_unit "coreos-installer-poweroff.service" \
-        "default.target"
+        "initrd.target"
 
     install_and_enable_unit "coreos-installer-growfs.service" \
-        "default.target"
+        "initrd.target"
 
     inst_script "$moddir/coreos-installer-growfs" \
         /usr/libexec/coreos-installer-growfs
