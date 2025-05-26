@@ -42,7 +42,7 @@ karg_bool() {
 
 if [ -n "$(karg coreos.inst.install_dev)" ]; then
     ln -sf "/usr/lib/systemd/system/coreos-installer.target" \
-        "${UNIT_DIR}/default.target"
+        "${UNIT_DIR}/initrd.target"
 
     dmesg -n 1
 
@@ -60,7 +60,7 @@ if [ -n "$(karg coreos.inst.install_dev)" ]; then
 fi
 
 if karg_bool coreos.inst.crypt_root; then
-    add_requires coreos-installer-luks-open.service default.target
+    add_requires coreos-installer-luks-open.service initrd.target
 
     dropindir="${UNIT_DIR}"/coreos-installer-growfs.service.d
     mkdir -p "${dropindir}"
@@ -84,7 +84,7 @@ if [ -n "${imgurl}" ]; then
     exit 0
 fi
 
-add_requires run-media-iso.mount default.target
+add_requires run-media-iso.mount initrd.target
 
 isoroot=$(getarg coreos.inst.isoroot= ||:)
 
