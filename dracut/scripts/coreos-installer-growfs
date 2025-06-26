@@ -40,6 +40,16 @@ lvm pvresize /dev/mapper/${crypt}
 
 lvm vgchange -ay rootvg
 
+# if running on Fedora, resize rootlv and fs to fill the disk
+if [ ! -z "$(grep "ID=fedora" /etc/os-release )" ]; then
+        echo "Expanding /dev/rootvg/rootlv to use all free space."
+        lvm lvextend -l +100%FREE /dev/rootvg/rootlv
+        echo "Running e2fsck on /dev/rootvg/rootlv"
+        e2fsck -f -y /dev/rootvg/rootlv < /dev/null
+        echo "Resizing filesystem on /dev/rootvg/rootlv."
+        resize2fs /dev/rootvg/rootlv
+fi
+
 if [[ ! -e /dev/disk/by-label/root ]]; then
     dm=$(blkid --label root)
     if [[ -z ${dm} ]]; then
