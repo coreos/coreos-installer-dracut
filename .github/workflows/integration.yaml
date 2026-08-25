@@ -8,6 +8,8 @@ on:
 
 jobs:
   pr-info:
+    permissions:
+      contents: read
     if: ${{ github.event.issue.pull_request &&
             (startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
@@ -39,11 +41,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Validate SHA from command matches PR head
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PR_HEAD_SHA: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
+        run: |
+          COMMAND_SHA=$(echo "$COMMENT_BODY" | awk '{print $2}')
+          if [[ ! "$COMMAND_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::The /test-* command must include the full 40-character commit SHA. Example: /test-all a1b2c3d4... ."
+            exit 1
+          fi
+          if [[ "$COMMAND_SHA" != "$PR_HEAD_SHA" ]]; then
+            echo "::error::SHA from command ($COMMAND_SHA) does not match current PR head ($PR_HEAD_SHA). The PR may have been updated since the command was posted."
+            exit 1
+          fi
+          echo "SHA validated: $COMMAND_SHA matches PR head."
+
     outputs:
       allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
       sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
 
   pre-rhel-9-4:
+    permissions:
+      contents: read
+      statuses: write
     needs: pr-info
     if: ${{ startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
@@ -65,6 +86,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   pre-centos-stream-9:
+    permissions:
+      contents: read
+      statuses: write
     needs: pr-info
     if: ${{ startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
@@ -86,6 +110,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   comment-info:
+    permissions:
+      contents: read
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' }}
     runs-on: ubuntu-latest
@@ -135,6 +161,9 @@ jobs:
 
 
   rhel-9-4:
+    permissions:
+      contents: read
+      statuses: write
     needs: [pr-info, comment-info]
     if: ${{ startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
@@ -196,9 +225,16 @@ jobs:
         run: cp ./coreos-installer-dracut/test/prepare.sh . && ./prepare.sh
         timeout-minutes: 20
 
+      - name: Checkout trusted test scripts from main
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          path: trusted-test
+          sparse-checkout: test
+
       - name: Run simplified-installer test
         run: ./edge-simplified-installer.sh
-        working-directory: ./coreos-installer-dracut/test
+        working-directory: ./trusted-test/test
         env:
           DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
         timeout-minutes: 120
@@ -223,6 +259,9 @@ jobs:
             ./coreos-installer-dracut/test/*.log
 
   centos-stream-9:
+    permissions:
+      contents: read
+      statuses: write
     needs: [pr-info, comment-info]
     if: ${{ startsWith(github.event.comment.body, '/test-all') ||
             startsWith(github.event.comment.body, '/test-9') ||
@@ -284,9 +323,16 @@ jobs:
         run: cp ./coreos-installer-dracut/test/prepare.sh . && ./prepare.sh
         timeout-minutes: 20
 
+      - name: Checkout trusted test scripts from main
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          path: trusted-test
+          sparse-checkout: test
+
       - name: Run simplified-installer test
         run: ./edge-simplified-installer.sh
-        working-directory: ./coreos-installer-dracut/test
+        working-directory: ./trusted-test/test
         env:
           DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
         timeout-minutes: 120
